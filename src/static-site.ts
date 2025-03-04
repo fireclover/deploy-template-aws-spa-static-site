@@ -28,6 +28,7 @@ export class StaticSite extends Construct {
 
     const zone = route53.HostedZone.fromLookup(this, 'Zone', { domainName: props.domainName });
     const siteDomain = props.siteSubDomain + '.' + props.domainName;
+    const webSourceFolder = props.webPath;
 
     new CfnOutput(this, 'Site', { value: 'https://' + siteDomain });
 
@@ -94,7 +95,7 @@ export class StaticSite extends Construct {
 
     // Deploy site contents to S3 bucket
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
-      sources: [s3deploy.Source.asset(path.join(__dirname, props.webPath))],
+      sources: [s3deploy.Source.asset(path.join(__dirname, webSourceFolder))],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ['/*'],
