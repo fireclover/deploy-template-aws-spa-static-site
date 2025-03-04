@@ -8,7 +8,7 @@ import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as path from 'path';
+//import * as path from 'path';
 
 export interface StaticSiteProps {
   domainName: string;
