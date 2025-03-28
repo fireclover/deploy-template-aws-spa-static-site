@@ -55,18 +55,6 @@ export class StaticSite extends Construct {
     });
 
     new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
-
-    const indexRedirect = folderRedirects ? new cloudfront.Function(this, 'Function', {
-      code: cloudfront.FunctionCode.fromInline('function handler(event) { \
-        var request = event.request; \
-        if (request.uri !== "/" && (request.uri.endsWith("/") || request.uri.lastIndexOf(".") < request.uri.lastIndexOf("/"))) { \
-          request.uri = request.uri.endsWith("/") ? request.uri.concat("index.html") : request.uri.concat("/index.html"); \
-        } \
-        return request; \
-      }'),
-      runtime: cloudfront.FunctionRuntime.JS_2_0,
-      autoPublish: true
-    }) : undefined;
     
     // TLS certificate
     const certificate = new acm.Certificate(this, 'SiteCertificate', {
@@ -83,7 +71,17 @@ export class StaticSite extends Construct {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         functionAssociations: [{
           eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-          function: indexRedirect,
+          function: new cloudfront.Function(this, 'Function', {
+            code: cloudfront.FunctionCode.fromInline('function handler(event) { \
+              var request = event.request; \
+              if (request.uri !== "/" && (request.uri.endsWith("/") || request.uri.lastIndexOf(".") < request.uri.lastIndexOf("/"))) { \
+                request.uri = request.uri.endsWith("/") ? request.uri.concat("index.html") : request.uri.concat("/index.html"); \
+              } \
+              return request; \
+            }'),
+            runtime: cloudfront.FunctionRuntime.JS_2_0,
+            autoPublish: true
+          }),
         }],
     } : {
         origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
