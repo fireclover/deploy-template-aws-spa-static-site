@@ -14,6 +14,7 @@ export interface StaticSiteProps {
   domainName: string;
   siteSubDomain: string;
   webPath: string;
+  folderRedirects: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export class StaticSite extends Construct {
     const zone = route53.HostedZone.fromLookup(this, 'Zone', { domainName: props.domainName });
     const siteDomain = props.siteSubDomain + '.' + props.domainName;
     const webSourceFolder = props.webPath;
+    const folderRedirects = props.folderRedirects;
 
     new CfnOutput(this, 'Site', { value: 'https://' + siteDomain });
 
@@ -54,6 +56,18 @@ export class StaticSite extends Construct {
 
     new CfnOutput(this, 'Bucket', { value: siteBucket.bucketName });
 
+    const indexRedirect = folderRedirects ? new cloudfront.Function(this, 'Function', {
+      code: cloudfront.FunctionCode.fromInline('function handler(event) { \
+        var request = event.request; \
+        if (request.uri !== "/" && (request.uri.endsWith("/") || request.uri.lastIndexOf(".") < request.uri.lastIndexOf("/"))) { \
+          request.uri = request.uri.endsWith("/") ? request.uri.concat("index.html") : request.uri.concat("/index.html"); \
+        } \
+        return request; \
+      }'),
+      runtime: cloudfront.FunctionRuntime.JS_2_0,
+      autoPublish: true
+    }) : undefined;
+    
     // TLS certificate
     const certificate = new acm.Certificate(this, 'SiteCertificate', {
       domainName: siteDomain,
@@ -81,6 +95,10 @@ export class StaticSite extends Construct {
         compress: true,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: folderRedirects ? [{
+          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          function: indexRedirect,
+        }] : [],        
       }
     })
 
