@@ -44,7 +44,8 @@ new MyStaticSiteStack(app, `MyStaticSite-${app.node.tryGetContext('subdomain')}`
          * Stack must be in us-east-1, because the ACM certificate for a
          * global CloudFront distribution must be requested in us-east-1.
          */
-        region: 'us-east-1',
+        region: app.node.tryGetContext('folderRedirects') || 'us-east-1',
+
     }
 });
 
