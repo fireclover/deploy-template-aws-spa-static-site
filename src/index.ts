@@ -23,6 +23,7 @@ class MyStaticSiteStack extends cdk.Stack {
             domainName: this.node.tryGetContext('domain'),
             siteSubDomain: this.node.tryGetContext('subdomain'),
             webPath: this.node.tryGetContext('webPath'),
+            folderRedirects: this.node.tryGetContext('folderRedirects'),
         });
     }
 }
