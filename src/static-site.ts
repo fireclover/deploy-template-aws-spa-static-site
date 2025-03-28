@@ -76,6 +76,22 @@ export class StaticSite extends Construct {
 
     new CfnOutput(this, 'Certificate', { value: certificate.certificateArn });
 
+    const defaultBehavior = folderRedirects ? {
+        origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
+        compress: true,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: folderRedirects ? [{
+          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          function: indexRedirect,
+        }],
+    } : {
+        origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
+        compress: true,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    };
+      
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       certificate: certificate,
@@ -90,16 +106,7 @@ export class StaticSite extends Construct {
           ttl: Duration.minutes(30),
         }
       ],
-      defaultBehavior: {
-        origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
-        compress: true,
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        functionAssociations: folderRedirects ? [{
-          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-          function: indexRedirect,
-        }] : [],        
-      }
+      defaultBehavior: defaultBehavior,
     })
 
     new CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
