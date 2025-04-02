@@ -19,10 +19,11 @@ class MyStaticSiteStack extends cdk.Stack {
     constructor(parent: cdk.App, name: string, props: cdk.StackProps) {
         super(parent, name, props);
 
+        const prepath = this.node.tryGetContext('webPath').toString().includes('test') ? '' : '../';
         new StaticSite(this, 'StaticSite', {
             domainName: this.node.tryGetContext('domain'),
             siteSubDomain: this.node.tryGetContext('subdomain'),
-            webPath: this.node.tryGetContext('webPath'),
+            webPath: prepath + this.node.tryGetContext('webPath'),
             folderRedirects: this.node.tryGetContext('folderRedirects'),
         });
     }
